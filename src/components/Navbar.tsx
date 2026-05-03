@@ -1,20 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, User, Menu, X, Search, Heart, MapPin, HelpCircle, Truck } from "lucide-react"; 
 import CartDrawer from "./CartDrawer";
-import WishlistDrawer from "./WishlistDrawer"; // <-- Wishlist Drawer Imported
+import WishlistDrawer from "./WishlistDrawer";
 import { useCartStore } from "@/lib/store";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isWishlistOpen, setIsWishlistOpen] = useState(false); // <-- Wishlist State
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  
+  // --- HYDRATION FIX ---
+  // Tells Next.js to wait until client loads before rendering numbers from LocalStorage
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   const cartCount = useCartStore((state) => state.cartCount()); 
-  const wishlistCount = useCartStore((state) => state.wishlistCount()); // <-- Fetch Wishlist Count
+  const wishlistCount = useCartStore((state) => state.wishlistCount());
 
   return (
     <>
@@ -55,12 +63,16 @@ export default function Navbar() {
             {/* Desktop Icons */}
             <div className="hidden md:flex items-center space-x-6 text-white">
               <Search className="w-5 h-5 hover:text-bodygold cursor-pointer transition-colors" />
-              <Link href="/profile"><User className="w-5 h-5 hover:text-bodygold cursor-pointer transition-colors" /></Link>
+              
+              {/* UPDATED: User Icon now goes to /login */}
+              <Link href="/login">
+                <User className="w-5 h-5 hover:text-bodygold cursor-pointer transition-colors" />
+              </Link>
               
               {/* Wishlist Icon */}
               <div className="relative cursor-pointer" onClick={() => setIsWishlistOpen(true)}>
                 <Heart className="w-5 h-5 hover:text-bodygold transition-colors" />
-                {wishlistCount > 0 && (
+                {isMounted && wishlistCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center">
                     {wishlistCount}
                   </span>
@@ -71,7 +83,7 @@ export default function Navbar() {
               <div className="relative cursor-pointer" onClick={() => setIsCartOpen(true)}>
                 <ShoppingCart className="w-5 h-5 hover:text-bodygold transition-colors" />
                 <span className="absolute -top-2 -right-2 bg-bodygold text-darkgray text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center">
-                  {cartCount}
+                  {isMounted ? cartCount : 0}
                 </span>
               </div>
             </div>
@@ -81,7 +93,7 @@ export default function Navbar() {
               {/* Mobile Wishlist Icon */}
               <div className="relative cursor-pointer" onClick={() => setIsWishlistOpen(true)}>
                 <Heart className="w-6 h-6 hover:text-bodygold transition-colors" />
-                {wishlistCount > 0 && (
+                {isMounted && wishlistCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center">
                     {wishlistCount}
                   </span>
@@ -92,7 +104,7 @@ export default function Navbar() {
                <div className="relative cursor-pointer" onClick={() => setIsCartOpen(true)}>
                 <ShoppingCart className="w-6 h-6 hover:text-bodygold transition-colors" />
                 <span className="absolute -top-2 -right-2 bg-bodygold text-darkgray text-[10px] font-black rounded-full h-4 w-4 flex items-center justify-center">
-                  {cartCount}
+                  {isMounted ? cartCount : 0}
                 </span>
               </div>
 
@@ -111,7 +123,8 @@ export default function Navbar() {
             <div className="px-4 py-4 space-y-2 font-bold text-gray-300">
               <Link href="/" className="block px-3 py-2 rounded-md hover:bg-white/5 hover:text-bodygold">HOME</Link>
               <Link href="/shop" className="block px-3 py-2 rounded-md hover:bg-white/5 hover:text-bodygold">SHOP</Link>
-              <Link href="/profile" className="block px-3 py-2 rounded-md hover:bg-white/5 hover:text-bodygold">PROFILE</Link>
+              {/* UPDATED: Mobile Menu goes to /login */}
+              <Link href="/login" className="block px-3 py-2 rounded-md hover:bg-white/5 hover:text-bodygold">LOGIN</Link>
             </div>
           </div>
         )}

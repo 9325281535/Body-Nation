@@ -1,39 +1,37 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// 1. Define the Types
 export interface CartItem {
   id: number;
   name: string;
   price: number;
   img: string;
-  flavor: string;
   quantity: number;
+  flavor?: string;
 }
 
-export interface WishlistItem {
-  id: number;
-  name: string;
-  price: number;
-  img: string;
-}
-
-interface AppStore {
-  // CART
+interface StoreState {
+  // Cart State
   cart: CartItem[];
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number, flavor: string) => void;
-  updateQuantity: (id: number, flavor: string, quantity: number) => void;
+  removeFromCart: (id: number) => void;
+  updateQuantity: (id: number, quantity: number) => void;
   clearCart: () => void;
   cartCount: () => number;
-
-  // WISHLIST
-  wishlist: WishlistItem[];
-  toggleWishlist: (item: WishlistItem) => void;
+  
+  // --- NEW: The Missing Function! ---
+  cartTotal: () => number; 
+  
+  // Wishlist State
+  wishlist: any[];
+  toggleWishlist: (item: any) => void;
   isInWishlist: (id: number) => boolean;
   wishlistCount: () => number;
 }
 
-export const useCartStore = create<AppStore>()(
+// 2. Create the Store
+export const useCartStore = create<StoreState>()(
   persist(
     (set, get) => ({
       // --- CART LOGIC ---
@@ -47,32 +45,28 @@ export const useCartStore = create<AppStore>()(
           set({ cart: [...currentCart, item] });
         }
       },
-      removeFromCart: (id, flavor) => {
-        set({ cart: get().cart.filter((i) => !(i.id === id && i.flavor === flavor)) });
-      },
-      updateQuantity: (id, flavor, quantity) => {
-        if (quantity < 1) return;
-        set({ cart: get().cart.map((i) => i.id === id && i.flavor === flavor ? { ...i, quantity } : i) });
-      },
+      removeFromCart: (id) => set({ cart: get().cart.filter((i) => i.id !== id) }),
+      updateQuantity: (id, quantity) => set({ cart: get().cart.map((i) => i.id === id ? { ...i, quantity } : i) }),
       clearCart: () => set({ cart: [] }),
-      cartCount: () => get().cart.reduce((acc, item) => acc + item.quantity, 0),
+      cartCount: () => get().cart.reduce((total, item) => total + item.quantity, 0),
+      
+      // --- THE FIX: This calculates the total price of all items in the cart ---
+      cartTotal: () => get().cart.reduce((total, item) => total + (item.price * item.quantity), 0),
 
       // --- WISHLIST LOGIC ---
       wishlist: [],
       toggleWishlist: (item) => {
-        const current = get().wishlist;
-        const exists = current.find((i) => i.id === item.id);
+        const currentWishlist = get().wishlist;
+        const exists = currentWishlist.find((i) => i.id === item.id);
         if (exists) {
-          // If it exists, remove it (Unlike)
-          set({ wishlist: current.filter((i) => i.id !== item.id) });
+          set({ wishlist: currentWishlist.filter((i) => i.id !== item.id) });
         } else {
-          // If it doesn't exist, add it (Like)
-          set({ wishlist: [...current, item] });
+          set({ wishlist: [...currentWishlist, item] });
         }
       },
-      isInWishlist: (id) => !!get().wishlist.find((i) => i.id === id),
+      isInWishlist: (id) => get().wishlist.some((i) => i.id === id),
       wishlistCount: () => get().wishlist.length,
     }),
-    { name: 'bodynation-storage' }
+    { name: 'bodynation-storage' } // This saves the cart in the browser
   )
 );

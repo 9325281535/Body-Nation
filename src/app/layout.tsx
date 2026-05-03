@@ -3,6 +3,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import AuthProvider from "@/components/AuthProvider"; // <-- 1. Import AuthProvider here!
 
 // 1. Load the ultra-professional Montserrat font
 const montserrat = Montserrat({ 
@@ -25,9 +26,12 @@ export default function RootLayout({
     <html lang="en">
       {/* 2. Apply it globally to the body */}
       <body className={`${montserrat.className} antialiased selection:bg-bodyblue selection:text-white`}>
-        <Navbar />
-        {children}
-        <Footer />
+        {/* 3. Wrap everything inside the AuthProvider */}
+        <AuthProvider>
+          <Navbar />
+          {children}
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
